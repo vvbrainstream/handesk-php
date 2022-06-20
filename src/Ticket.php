@@ -2,7 +2,7 @@
 
 namespace BadChoice\Handesk;
 
-use Illuminate\Support\Facades\Http;
+use GuzzleHttp\Client;
 
 class Ticket extends Handesk {
     const STATUS_NEW                = 1;
@@ -28,17 +28,17 @@ class Ticket extends Handesk {
     }
 
     public function create($requester, $title, $body, $tags, $team_id = null){
-        $response = Http::withHeaders([
-            "token" => static::$apiToken
-        ])->post(static::$url . "/tickets", [
-            "requester" => $requester,
-            "title"     => $title,
-            "body"      => $body,
-            "tags"      => $tags,
-            "team_id"   => $team_id,
+        $response = (new Client())->request("POST", static::$url . "/tickets", [
+            "headers" => ["token" => static::$apiToken],
+            "form_params" => [
+                "requester" => $requester,
+                "title"     => $title,
+                "body"      => $body,
+                "tags"      => $tags,
+                "team_id"   => $team_id,
+            ]
         ]);
-
-        return json_decode($response->body())->data->id;
+        return json_decode($response->getBody())->data->id;
     }
 
     public function get($requester, $status = 'open'){
@@ -55,23 +55,18 @@ class Ticket extends Handesk {
     }
 
     public function find($id){
-        $response = Http::withHeaders([
-            "token" => static::$apiToken
-        ])->get(static::$url . "/tickets/{$id}");
-        return new Ticket( $response["data"] );
+        $response = (new Client())->request("GET", static::$url . "/tickets/{$id}", ["headers" => ["token" => static::$apiToken]] );
+        return new Ticket( json_decode($response->getBody(),true)["data"] );
     }
 
-    public function addComment($requester, $comment, $solved = false, $language = 'en'){
-        $response = Http::withHeaders([
-            "token" => static::$apiToken
-        ])->post(static::$url . "/tickets/{$this->id}/comments",[
-            "requester"     => $requester,
-            "body"          => $comment,
-            "new_status"    => $solved ? static::STATUS_SOLVED : null,
-            "language"      => $language,
+    public function addComment($comment, $solved = false){
+        $response = (new Client())->request("POST", static::$url . "/tickets/{$this->id}/comments",[
+            "headers" => ["token" => static::$apiToken],
+            "form_params" => [
+                "body"          => $comment,
+                "new_status"    => $solved ? static::STATUS_SOLVED : null,
+            ]
         ]);
-
-        return $response;
     }
 
     public function statusName(){
@@ -93,7 +88,7 @@ class Ticket extends Handesk {
     }
 
     public function getEncryptedId() {
-        return encrypt($this->id); 
+        return encrypt($this->id);
     }
-    
+
 }

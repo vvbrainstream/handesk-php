@@ -32,7 +32,7 @@ class Handesk{
             }
             return $this->attributes[$value];
         }catch(\Exception $e){
-            dd($this->attributes,$value);
+            var_dump($this->attributes, $value);
         }
     }
 
