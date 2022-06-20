@@ -1,5 +1,5 @@
 {
-    "name": "badchoice/handesk-php",
+    "name": "refactor/handesk-php",
     "description": "Handesk PHP sdk",
     "type": "library",
     "require": {
